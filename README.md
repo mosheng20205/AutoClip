@@ -2,6 +2,10 @@
 
 上传一段带语音的视频，自动将语音转为文本，然后通过关键词搜索、AI 智能分析或手动勾选来筛选精华片段，一键剪辑输出。
 
+## 视频演示
+
+https://www.bilibili.com/video/BV18hP4zDEYk/
+
 ## 效果截图
 
 **语音转文本 + 片段筛选：**
@@ -87,8 +91,8 @@ AutoVideo/
 
 ```bash
 # 克隆项目
-git clone <仓库地址>
-cd AutoVideo
+git clone https://github.com/mosheng20205/AutoClip.git
+cd AutoClip
 
 # 安装 Python 依赖
 pip install -r requirements.txt
