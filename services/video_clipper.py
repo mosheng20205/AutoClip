@@ -27,11 +27,14 @@ async def clip_segments(
 
     for i, seg in enumerate(segments):
         part_path = os.path.join(output_dir, f"{stem}_{task_id}_part{i}.mp4")
+        # -ss 放在 -i 前面实现快速 seek，再用重新编码保证画面完整
         proc = await asyncio.create_subprocess_exec(
-            "ffmpeg", "-y", "-i", video_path,
+            "ffmpeg", "-y",
             "-ss", str(seg["start"]),
             "-to", str(seg["end"]),
-            "-c", "copy",
+            "-i", video_path,
+            "-c:v", "libx264", "-preset", "fast", "-crf", "18",
+            "-c:a", "aac", "-b:a", "128k",
             "-avoid_negative_ts", "make_zero",
             part_path,
             stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
