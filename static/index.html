@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>视频精华自动剪辑</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/style.css">
+</head>
+<body class="bg-gray-950 text-gray-100 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+
+        <header class="text-center mb-10">
+            <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
+                视频精华自动剪辑
+            </h1>
+            <p class="text-gray-400 mt-2">上传视频 → 语音转文本 → 智能筛选精华 → 一键剪辑</p>
+        </header>
+
+        <!-- Step 1: Upload -->
+        <section id="sec-upload" class="card mb-6">
+            <h2 class="step-title">① 上传视频</h2>
+            <div id="drop-zone" class="border-2 border-dashed border-gray-600 rounded-xl p-10 text-center cursor-pointer hover:border-blue-500 transition-colors">
+                <div id="drop-text">
+                    <svg class="mx-auto h-12 w-12 text-gray-500 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                              d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <p class="text-gray-400">拖拽视频到这里，或 <span class="text-blue-400 underline">点击选择文件</span></p>
+                    <p class="text-gray-500 text-sm mt-1">支持 MP4 / AVI / MKV / MOV / WebM</p>
+                </div>
+                <div id="upload-progress" class="hidden">
+                    <p id="upload-filename" class="text-blue-400 mb-2"></p>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div id="progress-bar" class="bg-blue-500 h-2 rounded-full transition-all" style="width:0%"></div>
+                    </div>
+                    <p id="upload-status" class="text-gray-400 text-sm mt-2"></p>
+                </div>
+            </div>
+            <input type="file" id="file-input" accept=".mp4,.avi,.mkv,.mov,.webm,.flv" class="hidden">
+        </section>
+
+        <!-- Step 2: Transcribe -->
+        <section id="sec-transcribe" class="card mb-6 hidden">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="step-title mb-0">② 语音转文本</h2>
+                <button id="btn-transcribe" class="btn-primary">开始转录</button>
+            </div>
+            <div id="transcribe-status" class="hidden">
+                <div id="transcribe-loading" class="flex items-center gap-3 text-gray-400">
+                    <div class="spinner"></div>
+                    <span>正在转录语音，请稍候（可能需要几分钟）...</span>
+                </div>
+                <div id="transcribe-error" class="hidden text-red-400"></div>
+            </div>
+        </section>
+
+        <!-- Step 3: Select Highlights -->
+        <section id="sec-highlights" class="card mb-6 hidden">
+            <h2 class="step-title">③ 筛选精华片段</h2>
+
+            <div class="flex flex-wrap gap-3 mb-4">
+                <div class="flex-1 min-w-0">
+                    <div class="flex gap-2">
+                        <input id="keyword-input" type="text" placeholder="输入关键词，多个用逗号分隔"
+                               class="flex-1 bg-gray-800 border border-gray-600 rounded-lg px-3 py-2 text-sm focus:border-blue-500 focus:outline-none">
+                        <button id="btn-keyword" class="btn-secondary text-sm whitespace-nowrap">关键词搜索</button>
+                    </div>
+                </div>
+                <button id="btn-llm" class="btn-accent text-sm whitespace-nowrap">AI 智能筛选</button>
+                <button id="btn-select-all" class="btn-ghost text-sm">全选</button>
+                <button id="btn-deselect" class="btn-ghost text-sm">取消全选</button>
+            </div>
+
+            <div id="llm-loading" class="hidden flex items-center gap-3 text-gray-400 mb-4">
+                <div class="spinner"></div>
+                <span>AI 正在分析内容，挑选精华片段...</span>
+            </div>
+
+            <div id="segment-list" class="max-h-96 overflow-y-auto space-y-1 pr-1 custom-scrollbar"></div>
+
+            <div class="mt-4 pt-4 border-t border-gray-700 flex items-center justify-between">
+                <div>
+                    <span class="text-gray-400">已选
+                        <span id="selected-count" class="text-blue-400 font-bold">0</span> 个片段
+                    </span>
+                    <span class="text-gray-500 ml-3">预计时长
+                        <span id="selected-duration" class="text-blue-400 font-bold">0:00</span>
+                    </span>
+                </div>
+                <button id="btn-clip" class="btn-primary" disabled>开始剪辑</button>
+            </div>
+        </section>
+
+        <!-- Step 4: Result -->
+        <section id="sec-result" class="card mb-6 hidden">
+            <h2 class="step-title">④ 剪辑结果</h2>
+            <div id="clip-loading" class="flex items-center gap-3 text-gray-400">
+                <div class="spinner"></div>
+                <span>正在剪辑视频，请稍候...</span>
+            </div>
+            <div id="clip-done" class="hidden text-center py-4">
+                <svg class="mx-auto h-12 w-12 text-green-400 mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                <p class="text-green-400 text-lg font-medium mb-4">剪辑完成！</p>
+                <a id="download-link" class="btn-primary inline-block" href="#" download>下载精华视频</a>
+            </div>
+        </section>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>
